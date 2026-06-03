@@ -402,13 +402,27 @@
             border-bottom: 1px solid var(--border);
             background: rgba(255, 255, 255, 0.02);
             display: flex;
-            align-items: center;
-            gap: 12px;
+            flex-direction: column;
+            gap: 8px;
             font-size: 13px;
         }
 
+        .quota-text {
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .quota-text.low {
+            color: #ffa500;
+        }
+
+        .quota-text.exhausted {
+            color: #ff6b6b;
+        }
+
         .quota-bar {
-            flex: 1;
+            width: 100%;
             height: 6px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 999px;
@@ -428,21 +442,6 @@
 
         .quota-fill.exhausted {
             background: linear-gradient(90deg, #ff6b6b, #ff4444);
-        }
-
-        .quota-text {
-            color: var(--muted);
-            font-weight: 500;
-            min-width: 120px;
-            text-align: right;
-        }
-
-        .quota-text.low {
-            color: #ffa500;
-        }
-
-        .quota-text.exhausted {
-            color: #ff6b6b;
         }
 
         .warning-banner {
