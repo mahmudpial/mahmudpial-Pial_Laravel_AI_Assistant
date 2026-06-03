@@ -172,18 +172,22 @@
             background: rgba(255, 107, 107, 0.1);
             border: 1px solid rgba(255, 107, 107, 0.3);
             color: #ff8787;
-            padding: 8px 12px;
+            padding: 10px 12px;
             border-radius: 10px;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: auto;
         }
 
         .logout-btn:hover {
             background: rgba(255, 107, 107, 0.2);
             border-color: rgba(255, 107, 107, 0.5);
+        }
+
+        .sidebar>form {
+            width: 100%;
+            margin-top: auto;
         }
 
         .main-content {
@@ -520,13 +524,6 @@
                         <p>{{ auth()->user()->email }}</p>
                     </div>
                 </div>
-
-                <form method="POST" action="{{ route('auth.logout') }}" style="margin: 0;">
-                    @csrf
-                    <button type="submit" class="logout-btn">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </button>
-                </form>
             </div>
 
             <div class="sidebar-card" style="flex: 1; overflow-y: auto;">
@@ -538,6 +535,13 @@
                     ✓ Rate limit: 10/min
                 </p>
             </div>
+
+            <form method="POST" action="{{ route('auth.logout') }}" style="margin: 0;">
+                @csrf
+                <button type="submit" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </form>
         </div>
 
         <!-- Main Content -->
