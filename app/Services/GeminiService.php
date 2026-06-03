@@ -34,13 +34,6 @@ class GeminiService
      */
     public function chat(array $history, string $systemPrompt = ''): string
     {
-        // Check rate limit - allow 10 requests per minute
-        $rateLimitKey = 'gemini-api-' . auth()->id();
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
-            $seconds = RateLimiter::availableIn($rateLimitKey);
-            return "⏳ Rate limited. Please wait {$seconds} seconds before sending another message.";
-        }
-        RateLimiter::hit($rateLimitKey, 60); // 60 second window
         if (blank($this->apiKey)) {
             Log::warning('Gemini API key is missing; skipping remote chat request.');
 
@@ -90,11 +83,14 @@ class GeminiService
             // Handle quota exceeded error specifically
             $errorMsg = $e->response->json('error.message', 'An unknown API error occurred.');
             if (str_contains($errorMsg, 'quota') || str_contains($errorMsg, 'Quota')) {
-                return '❌ API Quota Exceeded. You\'ve hit the free tier limit (20 requests).' . "\n\n"
+                return '❌ API Quota Exceeded. Free tier limits:' . "\n"
+                    . '• 10 requests per minute' . "\n"
+                    . '• 250 requests per day' . "\n"
+                    . '• 250,000 tokens per minute' . "\n\n"
                     . '**Option 1: Upgrade to Paid Plan**' . "\n"
                     . 'Visit https://ai.google.dev/pricing to upgrade and get 15,000 requests/minute.' . "\n\n"
-                    . '**Option 2: Wait for Free Tier Reset**' . "\n"
-                    . 'The free tier quota resets daily. Try again after 24 hours.';
+                    . '**Option 2: Wait for Reset**' . "\n"
+                    . 'Daily quota resets at midnight UTC. Try again tomorrow.';
             }
 
             return 'API Error: ' . $errorMsg;
