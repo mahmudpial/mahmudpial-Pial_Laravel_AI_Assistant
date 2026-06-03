@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,8 +31,16 @@
             --radius: 22px;
         }
 
-        * { box-sizing: border-box; }
-        html, body { height: 100%; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -50,8 +59,8 @@
             pointer-events: none;
             opacity: .22;
             background-image:
-                linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+                linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, .04) 1px, transparent 1px);
             background-size: 42px 42px;
             mask-image: radial-gradient(circle at center, black 48%, transparent 100%);
             z-index: -1;
@@ -240,12 +249,18 @@
             gap: 16px;
         }
 
-        .messages::-webkit-scrollbar { width: 8px; }
+        .messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
         .messages::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 999px;
         }
-        .messages::-webkit-scrollbar-track { background: transparent; }
+
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
 
         .message {
             display: flex;
@@ -452,6 +467,7 @@
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -459,8 +475,13 @@
         }
 
         @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .loading {
@@ -472,12 +493,14 @@
             .sidebar {
                 display: none;
             }
+
             .bubble {
                 max-width: 85%;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="app">
         <!-- Sidebar -->
@@ -533,19 +556,19 @@
             <!-- Quota Banner -->
             @if ($isLowQuota)
                 <div class="warning-banner {{ QuotaTracker::isExhausted() ? 'exhausted' : '' }}">
-                    <i class="bi {{ QuotaTracker::isExhausted() ? 'bi-exclamation-circle' : 'bi-exclamation-triangle' }}"></i>
+                    <i
+                        class="bi {{ QuotaTracker::isExhausted() ? 'bi-exclamation-circle' : 'bi-exclamation-triangle' }}"></i>
                     <span>{{ QuotaTracker::isExhausted() ? '⛔ Daily quota exhausted. Reset at midnight UTC.' : '⚠️ Low quota remaining. Consider upgrading.' }}</span>
                 </div>
             @endif
 
             <div class="quota-banner">
                 <span class="quota-text {{ $isLowQuota ? 'low' : '' }}">
-                    {{ $quotaStatus }}
+                    {!! $quotaStatus !!}
                 </span>
                 <div class="quota-bar">
-                    <div class="quota-fill {{ QuotaTracker::isLow() ? 'low' : (QuotaTracker::isExhausted() ? 'exhausted' : '') }}" 
-                         style="width: {{ QuotaTracker::getRemainingPercent() }}%">
-                    </div>
+                    <div class="quota-fill {{ $quotaFillClass }}"
+                        style="width: {{ QuotaTracker::getRemainingPercent() }}%;"></div>
                 </div>
             </div>
 
@@ -569,11 +592,7 @@
                 <!-- Input Section -->
                 <div class="input-section">
                     <div class="input-wrapper">
-                        <textarea 
-                            id="messageInput" 
-                            placeholder="Ask me anything..."
-                            rows="1"
-                        ></textarea>
+                        <textarea id="messageInput" placeholder="Ask me anything..." rows="1"></textarea>
                         <button class="btn-send" id="sendBtn" title="Send message">
                             <i class="bi bi-send-fill"></i>
                         </button>
@@ -591,13 +610,13 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
         // Auto-resize textarea
-        messageInput.addEventListener('input', function() {
+        messageInput.addEventListener('input', function () {
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
         });
 
         // Send message on Enter (Ctrl+Enter on mobile)
-        messageInput.addEventListener('keydown', function(e) {
+        messageInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
@@ -648,12 +667,12 @@
                 // Add assistant message
                 const assistantBubble = document.createElement('div');
                 assistantBubble.className = 'message assistant';
-                
+
                 let content = data.reply;
                 if (data.reply.includes('Error') || data.reply.includes('Quota')) {
                     assistantBubble.classList.add('error');
                 }
-                
+
                 assistantBubble.innerHTML = `<div class="bubble">${escapeHtml(content)}</div>`;
                 messagesDiv.appendChild(assistantBubble);
 
@@ -674,7 +693,7 @@
 
         function updateQuotaDisplay(quota, quotaStatus, isLowQuota) {
             const percent = (quota / 250) * 100;
-            
+
             // Update quota text
             const quotaText = document.querySelector('.quota-text');
             if (quotaText) {
@@ -732,4 +751,5 @@
         }
     </script>
 </body>
+
 </html>

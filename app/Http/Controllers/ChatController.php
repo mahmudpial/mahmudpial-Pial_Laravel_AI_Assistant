@@ -50,8 +50,16 @@ class ChatController extends Controller
         $quotaRemaining = QuotaTracker::getRemaining();
         $quotaStatus = QuotaTracker::getStatus();
         $isLowQuota = QuotaTracker::isLow();
-        
-        return view('chat', compact('history', 'quotaRemaining', 'quotaStatus', 'isLowQuota'));
+
+        // Determine quota fill class
+        $quotaFillClass = '';
+        if (QuotaTracker::isExhausted()) {
+            $quotaFillClass = 'exhausted';
+        } elseif (QuotaTracker::isLow()) {
+            $quotaFillClass = 'low';
+        }
+
+        return view('chat', compact('history', 'quotaRemaining', 'quotaStatus', 'isLowQuota', 'quotaFillClass'));
     }
 
     /**
