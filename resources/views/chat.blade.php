@@ -864,7 +864,7 @@
                 <div class="brand-row">
                     <div class="brand-icon">✨</div>
                     <div class="brand-info">
-                        <h1>AI Chat</h1>
+                        <h1>Laravel AI Assistant</h1>
                         <span>Powered by Gemini</span>
                     </div>
                 </div>
@@ -946,7 +946,7 @@
                 <div class="topbar-left">
                     <div class="topbar-dot"></div>
                     <div>
-                        <div class="topbar-title">Chat with AI</div>
+                        <div class="topbar-title">Chat AI</div>
                         <div class="topbar-sub">gemini-2.0-flash-lite &nbsp;·&nbsp; Laravel Assistant</div>
                     </div>
                 </div>
