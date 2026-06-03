@@ -1,7 +1,7 @@
 # Pial Mahmud Laravel AI Assistant
 
-A professional Laravel-based AI chatbot application powered by the Google Gemini API.
-The app provides a clean chat experience, session-based conversation history, and a simple interface for asking Laravel, PHP, and general programming questions.
+A polished Laravel-based AI chatbot application powered by the Google Gemini API.
+The project combines a ChatGPT-inspired workspace layout, a helpful left-side information panel, session-based conversation history, and a clean chat experience for Laravel, PHP, and general programming questions.
 
 ## Project Overview
 
@@ -13,6 +13,7 @@ The application is designed to be:
 - Simple to use
 - Easy to maintain
 - Fast to set up locally
+- Visually consistent with a personal brand theme
 - Ready for future feature expansion
 
 ## Live Purpose
@@ -29,8 +30,11 @@ The chatbot is intended to help users:
 - AI chat powered by Google Gemini API
 - Session-based chat history
 - Clear chat action
-- Clean Bootstrap 5 UI
-- Responsive layout
+- Brand-aligned dark UI
+- ChatGPT-inspired workspace layout with a distinct visual identity
+- Left-side info panel with quick prompts
+- Clean Bootstrap 5 layout
+- Responsive mobile-friendly design
 - Message validation and input limit
 - 20-turn conversation memory window
 - Role-based message rendering for user and assistant
@@ -45,6 +49,7 @@ The application follows a straightforward Laravel service-based structure:
 3. `GeminiService` prepares conversation history and sends requests to Gemini.
 4. Session storage keeps the current chat history for each user session.
 5. `resources/views/chat.blade.php` renders the UI and chat bubbles.
+6. The page layout includes a sidebar for project context, quick prompts, and stack highlights.
 
 ### Request Flow
 
@@ -81,6 +86,7 @@ vendor/
 - [app/Services/GeminiService.php](/Applications/xampp/xamppfiles/htdocs/Pial_Laravel_AI_Assistant/app/Services/GeminiService.php) - Gemini API integration
 - [resources/views/chat.blade.php](/Applications/xampp/xamppfiles/htdocs/Pial_Laravel_AI_Assistant/resources/views/chat.blade.php) - Main chatbot UI
 - [config/services.php](/Applications/xampp/xamppfiles/htdocs/Pial_Laravel_AI_Assistant/config/services.php) - API credential configuration
+- [README.md](/Applications/xampp/xamppfiles/htdocs/Pial_Laravel_AI_Assistant/README.md) - Project overview and setup guide
 
 ## Requirements
 
@@ -183,6 +189,8 @@ Environment keys used by the app:
 - The application keeps only the latest 20 turns to control memory usage.
 - The assistant prompt is defined in `ChatController`.
 - The UI is built with Bootstrap 5 and Bootstrap Icons.
+- The chat page is designed with a two-column layout on desktop and stacked layout on mobile.
+- Quick prompts in the sidebar can be used to speed up common questions.
 
 ## Testing
 

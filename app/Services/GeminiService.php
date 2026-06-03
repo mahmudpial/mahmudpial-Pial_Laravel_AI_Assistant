@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 
 class GeminiService
 {
@@ -21,7 +22,7 @@ class GeminiService
     public function __construct()
     {
         $this->apiKey = (string) config('services.gemini.key');
-        $this->model  = (string) config('services.gemini.model', 'gemini-1.5-flash');
+        $this->model = (string) config('services.gemini.model', 'gemini-1.5-flash');
     }
 
     /**
@@ -33,6 +34,13 @@ class GeminiService
      */
     public function chat(array $history, string $systemPrompt = ''): string
     {
+        // Check rate limit - allow 10 requests per minute
+        $rateLimitKey = 'gemini-api-' . auth()->id();
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            return "⏳ Rate limited. Please wait {$seconds} seconds before sending another message.";
+        }
+        RateLimiter::hit($rateLimitKey, 60); // 60 second window
         if (blank($this->apiKey)) {
             Log::warning('Gemini API key is missing; skipping remote chat request.');
 
@@ -43,7 +51,7 @@ class GeminiService
 
         foreach ($history as $turn) {
             $contents[] = [
-                'role'  => $turn['role'] === 'model' ? 'model' : 'user',
+                'role' => $turn['role'] === 'model' ? 'model' : 'user',
                 'parts' => [
                     ['text' => $turn['parts'][0]['text']],
                 ],
@@ -67,7 +75,7 @@ class GeminiService
                 ->withHeaders([
                     'x-goog-api-key' => $this->apiKey,
                 ])
-                ->post($this->baseUrl.'/'.$this->model.':generateContent', $payload)
+                ->post($this->baseUrl . '/' . $this->model . ':generateContent', $payload)
                 ->throw();
 
             return $response->json('candidates.0.content.parts.0.text')
@@ -76,16 +84,26 @@ class GeminiService
         } catch (RequestException $e) {
             Log::error('Gemini API Request Exception', [
                 'status' => $e->response->status(),
-                'body'   => $e->response->body()
+                'body' => $e->response->body()
             ]);
 
-            return 'API Error: ' . $e->response->json('error.message', 'An unknown API error occurred.');
+            // Handle quota exceeded error specifically
+            $errorMsg = $e->response->json('error.message', 'An unknown API error occurred.');
+            if (str_contains($errorMsg, 'quota') || str_contains($errorMsg, 'Quota')) {
+                return '❌ API Quota Exceeded. You\'ve hit the free tier limit (20 requests).' . "\n\n"
+                    . '**Option 1: Upgrade to Paid Plan**' . "\n"
+                    . 'Visit https://ai.google.dev/pricing to upgrade and get 15,000 requests/minute.' . "\n\n"
+                    . '**Option 2: Wait for Free Tier Reset**' . "\n"
+                    . 'The free tier quota resets daily. Try again after 24 hours.';
+            }
+
+            return 'API Error: ' . $errorMsg;
 
         } catch (\Throwable $e) {
             // Catch and log unexpected structural breakdowns or connection terminations
             Log::error('GeminiService Critical Exception', [
                 'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString()
             ]);
 
             return 'Internal Server Error: Unable to process your request at this time.';
