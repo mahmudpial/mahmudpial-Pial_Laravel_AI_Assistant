@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::get('/', function () {
-    if (auth()->check()) {
+    if (optional(auth())->check() ?? false) {
         return redirect()->route('chat.index');
     }
     return redirect()->route('auth.login');

@@ -38,7 +38,7 @@ class ChatController extends Controller
      */
     private function getCacheKey(): string
     {
-        return 'chat_history_' . auth()->id();
+        return 'chat_history_' . optional(auth())->id();
     }
 
     /**
@@ -79,7 +79,7 @@ class ChatController extends Controller
         $history[] = GeminiService::userTurn($request->message);
 
         // Check cache for identical message FIRST (doesn't count toward rate limit)
-        $cacheKey = 'gemini-response-' . hash('sha256', $request->message . auth()->id());
+        $cacheKey = 'gemini-response-' . hash('sha256', $request->message . optional(auth())->id());
         $cachedReply = cache()->get($cacheKey);
 
         if ($cachedReply) {
@@ -87,7 +87,7 @@ class ChatController extends Controller
             $replyText = $cachedReply;
         } else {
             // New API call - check rate limit ONLY for actual API calls
-            $rateLimitKey = 'gemini-api-' . auth()->id();
+            $rateLimitKey = 'gemini-api-' . optional(auth())->id();
             if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
                 $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($rateLimitKey);
                 return response()->json([
