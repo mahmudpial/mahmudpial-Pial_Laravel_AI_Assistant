@@ -6,110 +6,130 @@ use Illuminate\Support\Facades\Cache;
 
 class QuotaTracker
 {
-    private const DAILY_LIMIT = 250;
-    private const LOW_QUOTA_THRESHOLD = 20;
+    // gemini-2.0-flash-lite free tier limits
+    private const DAILY_LIMIT = 1500;
+    private const RPM_LIMIT = 30;
+    private const LOW_THRESHOLD = 100;  // warn when < 100 daily remaining
 
-    /**
-     * Get today's cache key for quota tracking
-     */
-    private static function getDayKey(): string
+    // ── Cache keys ────────────────────────────────────────────
+
+    private static function dayKey(): string
     {
-        return 'gemini-quota-' . now()->format('Y-m-d');
+        return 'gemini_quota_day_' . now()->utc()->format('Y-m-d');
     }
 
+    private static function minuteKey(): string
+    {
+        // Changes every minute; TTL of 60s ensures auto-expiry
+        return 'gemini_quota_rpm_' . now()->utc()->format('Y-m-d_H-i');
+    }
+
+    // ── Write ──────────────────────────────────────────────────
+
     /**
-     * Record an API request
+     * Record one API request. Call this right before sending to Gemini.
      */
     public static function recordRequest(): void
     {
-        $dayKey = self::getDayKey();
-        $current = Cache::get($dayKey, 0);
-        // Store for entire day (86400 seconds)
-        Cache::put($dayKey, $current + 1, 86400);
+        // Daily — expires precisely at UTC midnight
+        $ttlDay = now()->utc()->secondsUntilEndOfDay() + 1;
+        Cache::put(self::dayKey(), self::getTodayCount() + 1, $ttlDay);
+
+        // Per-minute — auto-expires after 60 s
+        Cache::put(self::minuteKey(), self::getCurrentMinuteCount() + 1, 60);
     }
 
-    /**
-     * Get today's request count
-     */
+    // ── Daily quota ────────────────────────────────────────────
+
     public static function getTodayCount(): int
     {
-        return Cache::get(self::getDayKey(), 0);
+        return (int) Cache::get(self::dayKey(), 0);
     }
 
-    /**
-     * Get remaining requests for today
-     */
     public static function getRemaining(): int
     {
-        $used = self::getTodayCount();
-        $remaining = self::DAILY_LIMIT - $used;
-        return max(0, $remaining);
+        return max(0, self::DAILY_LIMIT - self::getTodayCount());
     }
 
-    /**
-     * Get remaining percentage
-     */
     public static function getRemainingPercent(): float
     {
         return round((self::getRemaining() / self::DAILY_LIMIT) * 100, 1);
     }
 
-    /**
-     * Check if quota is low
-     */
-    public static function isLow(): bool
-    {
-        return self::getRemaining() <= self::LOW_QUOTA_THRESHOLD;
-    }
-
-    /**
-     * Check if quota is exhausted
-     */
     public static function isExhausted(): bool
     {
         return self::getRemaining() <= 0;
     }
 
+    public static function isLow(): bool
+    {
+        return !self::isExhausted() && self::getRemaining() <= self::LOW_THRESHOLD;
+    }
+
+    // ── Per-minute (RPM) quota ─────────────────────────────────
+
+    public static function getCurrentMinuteCount(): int
+    {
+        return (int) Cache::get(self::minuteKey(), 0);
+    }
+
+    public static function getRpmRemaining(): int
+    {
+        return max(0, self::RPM_LIMIT - self::getCurrentMinuteCount());
+    }
+
     /**
-     * Get status message
+     * Returns true when the per-minute cap is reached.
+     * Check this BEFORE calling recordRequest().
      */
+    public static function isRpmExhausted(): bool
+    {
+        return self::getCurrentMinuteCount() >= self::RPM_LIMIT;
+    }
+
+    // ── Status helpers ─────────────────────────────────────────
+
     public static function getStatus(): string
     {
         $remaining = self::getRemaining();
         $percent = self::getRemainingPercent();
+        $limit = self::DAILY_LIMIT;
 
         if (self::isExhausted()) {
-            return "⛔ Quota exhausted (0/{self::DAILY_LIMIT})";
+            return '⛔ Quota exhausted (0/' . $limit . ')';
         }
 
         if (self::isLow()) {
-            return "⚠️  Low quota: {$remaining}/{self::DAILY_LIMIT} ({$percent}%)";
+            return '⚠️  Low quota: ' . $remaining . '/' . $limit . ' (' . $percent . '%)';
         }
 
-        return "✅ {$remaining}/{self::DAILY_LIMIT} ({$percent}%)";
+        return '✅ ' . $remaining . '/' . $limit . ' (' . $percent . '%)';
     }
 
-    /**
-     * Get status color class
-     */
     public static function getStatusClass(): string
     {
-        if (self::isExhausted()) {
+        if (self::isExhausted())
             return 'status-exhausted';
-        }
-
-        if (self::isLow()) {
+        if (self::isLow())
             return 'status-low';
-        }
-
         return 'status-ok';
     }
 
-    /**
-     * Reset quota (admin only, for testing)
-     */
+    public static function getFillClass(): string
+    {
+        if (self::isExhausted())
+            return 'exhausted';
+        if (self::isLow())
+            return 'low';
+        return '';
+    }
+
+    // ── Utility ────────────────────────────────────────────────
+
+    /** Reset all quota counters (for testing / admin use). */
     public static function reset(): void
     {
-        Cache::forget(self::getDayKey());
+        Cache::forget(self::dayKey());
+        Cache::forget(self::minuteKey());
     }
 }
