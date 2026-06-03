@@ -59,30 +59,31 @@ class ChatController extends Controller
             'message' => 'required|string|max:2000',
         ]);
 
-        // Check rate limit
-        $rateLimitKey = 'gemini-api-' . auth()->id();
-        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
-            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($rateLimitKey);
-            return response()->json([
-                'reply' => "⏳ Rate limited. Please wait {$seconds} seconds before sending another message.",
-                'success' => false,
-            ]);
-        }
-
         // Get user's chat history
         $history = cache()->get($this->getCacheKey(), []);
 
         // Add user message
         $history[] = GeminiService::userTurn($request->message);
 
-        // Check cache for identical message
+        // Check cache for identical message FIRST (doesn't count toward rate limit)
         $cacheKey = 'gemini-response-' . hash('sha256', $request->message . auth()->id());
         $cachedReply = cache()->get($cacheKey);
 
         if ($cachedReply) {
+            // Cached response - doesn't use rate limit
             $replyText = $cachedReply;
         } else {
-            // Only count actual API calls against rate limit
+            // New API call - check rate limit ONLY for actual API calls
+            $rateLimitKey = 'gemini-api-' . auth()->id();
+            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
+                $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($rateLimitKey);
+                return response()->json([
+                    'reply' => "⏳ Rate limited. Please wait {$seconds} seconds before sending another message.",
+                    'success' => false,
+                ]);
+            }
+
+            // Hit rate limit only for actual API calls
             \Illuminate\Support\Facades\RateLimiter::hit($rateLimitKey, 60);
 
             // Get response from Gemini

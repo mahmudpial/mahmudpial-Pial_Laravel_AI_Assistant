@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up | Pial Mahmud AI Assistant</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <style>
         :root {
             --bg: #0b0f14;
@@ -24,8 +25,14 @@
             --radius: 22px;
         }
 
-        * { box-sizing: border-box; }
-        html, body { min-height: 100vh; }
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100vh;
+        }
 
         body {
             margin: 0;
@@ -48,8 +55,8 @@
             pointer-events: none;
             opacity: .22;
             background-image:
-                linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+                linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, .04) 1px, transparent 1px);
             background-size: 42px 42px;
             mask-image: radial-gradient(circle at center, black 48%, transparent 100%);
             z-index: -1;
@@ -204,6 +211,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="auth-container">
         <div class="auth-card">
@@ -226,53 +234,27 @@
 
                 <div class="form-group">
                     <label for="name">Full Name</label>
-                    <input 
-                        type="text" 
-                        id="name" 
-                        name="name" 
-                        class="form-control" 
-                        placeholder="John Doe"
-                        value="{{ old('name') }}"
-                        required
-                    >
+                    <input type="text" id="name" name="name" class="form-control" placeholder="John Doe"
+                        value="{{ old('name') }}" required>
                 </div>
 
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        class="form-control" 
-                        placeholder="your@email.com"
-                        value="{{ old('email') }}"
-                        required
-                    >
+                    <input type="email" id="email" name="email" class="form-control" placeholder="your@email.com"
+                        value="{{ old('email') }}" required>
                 </div>
 
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        class="form-control" 
-                        placeholder="••••••••"
-                        required
-                    >
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••"
+                        required>
                     <div class="help-text">Minimum 8 characters</div>
                 </div>
 
                 <div class="form-group">
                     <label for="password_confirmation">Confirm Password</label>
-                    <input 
-                        type="password" 
-                        id="password_confirmation" 
-                        name="password_confirmation" 
-                        class="form-control" 
-                        placeholder="••••••••"
-                        required
-                    >
+                    <input type="password" id="password_confirmation" name="password_confirmation" class="form-control"
+                        placeholder="••••••••" required>
                 </div>
 
                 <button type="submit" class="btn-signup">Create Account</button>
@@ -284,4 +266,5 @@
         </div>
     </div>
 </body>
+
 </html>
