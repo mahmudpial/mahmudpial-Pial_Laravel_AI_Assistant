@@ -11,6 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
+    <?php 
+    use App\Services\QuotaTracker;
+    ?>
+
     <style>
         :root {
             --bg: #0a0d12;
@@ -378,6 +382,71 @@
             border-left: 3px solid #ff6b6b;
         }
 
+        .quota-banner {
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .quota-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .quota-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--brand-2), var(--brand));
+            border-radius: 999px;
+            transition: width 0.3s ease;
+        }
+
+        .quota-fill.low {
+            background: linear-gradient(90deg, #ffa500, #ff8c00);
+        }
+
+        .quota-fill.exhausted {
+            background: linear-gradient(90deg, #ff6b6b, #ff4444);
+        }
+
+        .quota-text {
+            color: var(--muted);
+            font-weight: 500;
+            min-width: 120px;
+            text-align: right;
+        }
+
+        .quota-text.low {
+            color: #ffa500;
+        }
+
+        .quota-text.exhausted {
+            color: #ff6b6b;
+        }
+
+        .warning-banner {
+            padding: 12px 24px;
+            background: rgba(255, 165, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 165, 0, 0.3);
+            color: #ffd580;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .warning-banner.exhausted {
+            background: rgba(255, 107, 107, 0.1);
+            border-bottom-color: rgba(255, 107, 107, 0.3);
+            color: #ff8787;
+        }
+
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -458,6 +527,25 @@
                     <button class="btn-icon" id="clearBtn" title="Clear chat">
                         <i class="bi bi-trash3"></i>
                     </button>
+                </div>
+            </div>
+
+            <!-- Quota Banner -->
+            @if ($isLowQuota)
+                <div class="warning-banner {{ QuotaTracker::isExhausted() ? 'exhausted' : '' }}">
+                    <i class="bi {{ QuotaTracker::isExhausted() ? 'bi-exclamation-circle' : 'bi-exclamation-triangle' }}"></i>
+                    <span>{{ QuotaTracker::isExhausted() ? '⛔ Daily quota exhausted. Reset at midnight UTC.' : '⚠️ Low quota remaining. Consider upgrading.' }}</span>
+                </div>
+            @endif
+
+            <div class="quota-banner">
+                <span class="quota-text {{ $isLowQuota ? 'low' : '' }}">
+                    {{ $quotaStatus }}
+                </span>
+                <div class="quota-bar">
+                    <div class="quota-fill {{ QuotaTracker::isLow() ? 'low' : (QuotaTracker::isExhausted() ? 'exhausted' : '') }}" 
+                         style="width: {{ QuotaTracker::getRemainingPercent() }}%">
+                    </div>
                 </div>
             </div>
 
@@ -554,6 +642,9 @@
 
                 const data = await response.json();
 
+                // Update quota display
+                updateQuotaDisplay(data.quota, data.quotaStatus, data.isLowQuota);
+
                 // Add assistant message
                 const assistantBubble = document.createElement('div');
                 assistantBubble.className = 'message assistant';
@@ -578,6 +669,38 @@
                 sendBtn.disabled = false;
                 sendBtn.innerHTML = '<i class="bi bi-send-fill"></i>';
                 messageInput.focus();
+            }
+        }
+
+        function updateQuotaDisplay(quota, quotaStatus, isLowQuota) {
+            const percent = (quota / 250) * 100;
+            
+            // Update quota text
+            const quotaText = document.querySelector('.quota-text');
+            if (quotaText) {
+                quotaText.textContent = quotaStatus;
+                quotaText.className = 'quota-text';
+                if (isLowQuota) quotaText.classList.add('low');
+            }
+
+            // Update quota bar
+            const quotaFill = document.querySelector('.quota-fill');
+            if (quotaFill) {
+                quotaFill.style.width = percent + '%';
+                quotaFill.className = 'quota-fill';
+                if (quota <= 20) quotaFill.classList.add('low');
+                if (quota === 0) quotaFill.classList.add('exhausted');
+            }
+
+            // Update warning banner
+            const warningBanner = document.querySelector('.warning-banner');
+            if (quota === 0) {
+                if (!warningBanner) {
+                    const banner = document.createElement('div');
+                    banner.className = 'warning-banner exhausted';
+                    banner.innerHTML = '<i class="bi bi-exclamation-circle"></i><span>⛔ Daily quota exhausted. Reset at midnight UTC.</span>';
+                    document.querySelector('.main-content').insertBefore(banner, document.querySelector('.quota-banner'));
+                }
             }
         }
 

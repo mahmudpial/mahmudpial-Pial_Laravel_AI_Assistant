@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\GeminiService;
+use App\Services\QuotaTracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -46,7 +47,11 @@ class ChatController extends Controller
     public function index()
     {
         $history = cache()->get($this->getCacheKey(), []);
-        return view('chat', compact('history'));
+        $quotaRemaining = QuotaTracker::getRemaining();
+        $quotaStatus = QuotaTracker::getStatus();
+        $isLowQuota = QuotaTracker::isLow();
+        
+        return view('chat', compact('history', 'quotaRemaining', 'quotaStatus', 'isLowQuota'));
     }
 
     /**
@@ -80,6 +85,9 @@ class ChatController extends Controller
                 return response()->json([
                     'reply' => "⏳ Rate limited. Please wait {$seconds} seconds before sending another message.",
                     'success' => false,
+                    'quota' => QuotaTracker::getRemaining(),
+                    'quotaStatus' => QuotaTracker::getStatus(),
+                    'isLowQuota' => QuotaTracker::isLow(),
                 ]);
             }
 
@@ -88,6 +96,9 @@ class ChatController extends Controller
 
             // Get response from Gemini
             $replyText = $gemini->chat($history, self::SYSTEM_PROMPT);
+
+            // Track the API request
+            QuotaTracker::recordRequest();
 
             // Cache successful responses for 1 hour
             if (!str_contains($replyText, 'Error') && !str_contains($replyText, 'Quota')) {
@@ -107,6 +118,9 @@ class ChatController extends Controller
         return response()->json([
             'reply' => $replyText,
             'success' => true,
+            'quota' => QuotaTracker::getRemaining(),
+            'quotaStatus' => QuotaTracker::getStatus(),
+            'isLowQuota' => QuotaTracker::isLow(),
         ]);
     }
 
