@@ -83,14 +83,20 @@ class GeminiService
             // Handle quota exceeded error specifically
             $errorMsg = $e->response->json('error.message', 'An unknown API error occurred.');
             if (str_contains($errorMsg, 'quota') || str_contains($errorMsg, 'Quota')) {
-                return '❌ API Quota Exceeded. Free tier limits:' . "\n"
-                    . '• 10 requests per minute' . "\n"
-                    . '• 250 requests per day' . "\n"
-                    . '• 250,000 tokens per minute' . "\n\n"
-                    . '**Option 1: Upgrade to Paid Plan**' . "\n"
-                    . 'Visit https://ai.google.dev/pricing to upgrade and get 15,000 requests/minute.' . "\n\n"
-                    . '**Option 2: Wait for Reset**' . "\n"
-                    . 'Daily quota resets at midnight UTC. Try again tomorrow.';
+                return '❌ API Quota Exceeded
+
+Free tier limits:
+• 10 requests per minute
+• 250 requests per day
+• 250,000 tokens per minute
+
+─────────────────────────────────
+
+Option 1: Upgrade to Paid Plan
+Visit https://ai.google.dev/pricing to upgrade and get 15,000 requests/minute.
+
+Option 2: Wait for Reset
+Daily quota resets at midnight UTC. Try again tomorrow.';
             }
 
             return 'API Error: ' . $errorMsg;
