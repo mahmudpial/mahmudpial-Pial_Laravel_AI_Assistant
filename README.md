@@ -81,12 +81,12 @@ vendor/
 
 ### Important Files
 
-- [routes/web.php](/Applications/xampp/xamppfiles/htdocs/Pial_Laravel_AI_Assistant/routes/web.php) - Application routes
-- [app/Http/Controllers/ChatController.php](/Applications/xampp/xamppfiles/htdocs/Pial_Laravel_AI_Assistant/app/Http/Controllers/ChatController.php) - Chat request handling
-- [app/Services/GeminiService.php](/Applications/xampp/xamppfiles/htdocs/Pial_Laravel_AI_Assistant/app/Services/GeminiService.php) - Gemini API integration
-- [resources/views/chat.blade.php](/Applications/xampp/xamppfiles/htdocs/Pial_Laravel_AI_Assistant/resources/views/chat.blade.php) - Main chatbot UI
-- [config/services.php](/Applications/xampp/xamppfiles/htdocs/Pial_Laravel_AI_Assistant/config/services.php) - API credential configuration
-- [README.md](/Applications/xampp/xamppfiles/htdocs/Pial_Laravel_AI_Assistant/README.md) - Project overview and setup guide
+- [routes/web.php](routes/web.php) - Application routes
+- [app/Http/Controllers/ChatController.php](app/Http/Controllers/ChatController.php) - Chat request handling
+- [app/Services/GeminiService.php](app/Services/GeminiService.php) - Gemini API integration
+- [resources/views/chat.blade.php](resources/views/chat.blade.php) - Main chatbot UI
+- [config/services.php](config/services.php) - API credential configuration
+- [README.md](README.md) - Project overview and setup guide
 
 ## Requirements
 
@@ -176,7 +176,7 @@ Then open the app in your browser.
 
 ## Configuration
 
-The Gemini credentials are loaded from [config/services.php](/Applications/xampp/xamppfiles/htdocs/Pial_Laravel_AI_Assistant/config/services.php).
+The Gemini credentials are loaded from [config/services.php](config/services.php).
 
 Environment keys used by the app:
 
