@@ -18,7 +18,7 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('/signup', 'signup')->name('auth.signup.submit')->middleware('guest');
     Route::get('/login', 'showLogin')->name('auth.login')->middleware('guest');
     Route::post('/login', 'login')->name('auth.login.submit')->middleware('guest');
-    Route::post('/logout', 'logout')->name('auth.logout')->middleware('auth');
+    Route::post('/logout', 'logout')->name('logout')->middleware('auth');
 });
 
 // Chat routes (protected)
