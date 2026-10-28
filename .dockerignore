@@ -1,0 +1,6 @@
+.git
+.env
+vendor
+storage/*.key
+node_modules
+tests
