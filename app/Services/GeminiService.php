@@ -31,7 +31,7 @@ PROMPT;
     public function __construct()
     {
         $this->apiKey = (string) config('services.gemini.key');
-        $this->model = (string) config('services.gemini.model', 'gemini-1.5-flash');
+        $this->model = (string) env('GEMINI_MODEL', 'gemini-1.5-flash');
     }
 
     /**
