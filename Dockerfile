@@ -29,4 +29,6 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
 EXPOSE 80
-CMD ["apache2-foreground"]
+COPY entrypoint.sh /usr
+RUN chmod +x /usr/entrypoint.sh
+CMD ["/usr/entrypoint.sh"]
