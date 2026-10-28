@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.4-apache
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -24,9 +24,11 @@ RUN a2enmod rewrite
 # Copy application code
 COPY . /var/www/html
 
-# Install PHP dependencies
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader
+
+# FIX: Install PHP dependencies ignoring platform requirements to avoid version conflicts
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 # Build Frontend Assets with Vite
 RUN npm install && npm run build
