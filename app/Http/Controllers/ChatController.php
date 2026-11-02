@@ -213,7 +213,9 @@ class ChatController extends Controller
         $aiService = $this->ai;
 
         return new StreamedResponse(function () use ($conversation, $history, $aiService) {
-            if (ob_get_level()) ob_end_clean();
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
 
             // Emit meta header
             echo "data: " . json_encode([
@@ -229,11 +231,12 @@ class ChatController extends Controller
                 flush();
             });
 
-            // Persist full reply in DB
+            // Persist full reply in DB with safety check
+            $replyToSave = !empty(trim($fullReply)) ? $fullReply : '⚠️ Empty reply received from AI provider.';
             Message::create([
                 'conversation_id' => $conversation->id,
                 'role' => 'ai',
-                'content' => $fullReply,
+                'content' => $replyToSave,
             ]);
             $conversation->touch();
 

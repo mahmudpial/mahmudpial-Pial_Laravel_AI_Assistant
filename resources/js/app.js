@@ -193,10 +193,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 removeElement(typingId);
 
-                // If server returned error JSON (e.g. 429 quota)
-                if (!response.ok && response.headers.get('content-type')?.includes('application/json')) {
-                    const errJson = await response.json();
-                    appendAIMessage(errJson.error || 'Server error occurred.');
+                // If server returned error HTTP status (e.g. 429 quota, 401 unauthenticated, 500)
+                if (!response.ok) {
+                    let errText = 'Server error occurred (' + response.status + ').';
+                    try {
+                        const errJson = await response.json();
+                        if (errJson.error) errText = errJson.error;
+                        else if (errJson.message) errText = errJson.message;
+                    } catch (_) {
+                        if (response.status === 419) {
+                            errText = 'Session expired. Please refresh the page.';
+                        }
+                    }
+                    appendAIMessage(errText);
                     setSendingState(false);
                     return;
                 }
@@ -276,6 +285,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Non-json SSE heartbeat, skip
                         }
                     }
+                }
+
+                // If stream completed with blank content, display fallback
+                if (!accumulatedText.trim()) {
+                    accumulatedText = '⚠️ No response was received from the AI service. Please verify your provider settings in the Admin Panel or try again.';
+                    messageBody.innerHTML = parseMarkdown(accumulatedText);
                 }
 
                 // Finalize decorations once stream completes

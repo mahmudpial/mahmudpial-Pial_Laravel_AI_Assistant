@@ -4,3 +4,5 @@ vendor
 storage/*.key
 node_modules
 tests
+public/hot
+public/fonts-manifest.dev.json

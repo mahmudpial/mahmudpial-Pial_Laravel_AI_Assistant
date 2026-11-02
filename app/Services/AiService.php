@@ -12,7 +12,7 @@ class AiService
         'groq' => [
             'name' => 'Groq (Ultra-Fast LPU)',
             'endpoint' => 'https://api.groq.com/openai/v1/chat/completions',
-            'default_model' => 'llama-3.3-70b-versatile',
+            'default_model' => 'openai/gpt-oss-120b',
             'env_key' => 'GROQ_API_KEY',
         ],
         'openai' => [
@@ -51,8 +51,28 @@ PROMPT;
     public static function getActiveModel(): string
     {
         $provider = self::getActiveProvider();
-        $defaultModel = self::PROVIDERS[$provider]['default_model'] ?? 'llama-3.3-70b-versatile';
-        return Setting::get('ai_model', env('AI_MODEL', $defaultModel));
+        $providerConfig = self::PROVIDERS[$provider] ?? self::PROVIDERS['groq'];
+
+        // 1. Check setting in database (Admin panel configuration)
+        $dbModel = Setting::get('ai_model');
+        if (!empty($dbModel)) {
+            return $dbModel;
+        }
+
+        // 2. Check provider-specific env variable (e.g. GROQ_MODEL, OPENAI_MODEL)
+        $providerEnv = env(strtoupper($provider) . '_MODEL');
+        if (!empty($providerEnv)) {
+            return $providerEnv;
+        }
+
+        // 3. Check generic AI_MODEL env variable
+        $aiModelEnv = env('AI_MODEL');
+        if (!empty($aiModelEnv)) {
+            return $aiModelEnv;
+        }
+
+        // 4. Fall back to provider default
+        return $providerConfig['default_model'];
     }
 
     public static function getApiKey(string $provider): string
@@ -127,6 +147,8 @@ PROMPT;
 
         $messages = $this->buildMessagesArray($history);
         $fullResponse = '';
+        $reasoningText = '';
+        $rawErrorBody = '';
 
         $payload = json_encode([
             'model' => $model,
@@ -148,11 +170,17 @@ PROMPT;
         curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 
         // Process incoming SSE stream chunks
-        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) use (&$fullResponse, $onChunk) {
+        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) use (&$fullResponse, &$reasoningText, &$rawErrorBody, $onChunk) {
             $lines = explode("\n", $data);
             foreach ($lines as $line) {
                 $line = trim($line);
-                if (empty($line) || !str_starts_with($line, 'data:')) {
+                if (empty($line)) {
+                    continue;
+                }
+
+                if (!str_starts_with($line, 'data:')) {
+                    // Possible API error payload or raw non-SSE line
+                    $rawErrorBody .= $line;
                     continue;
                 }
 
@@ -162,23 +190,65 @@ PROMPT;
                 }
 
                 $json = json_decode($jsonStr, true);
+                if (!is_array($json)) {
+                    continue;
+                }
+
+                // Check for standard delta content
                 if (isset($json['choices'][0]['delta']['content'])) {
                     $token = $json['choices'][0]['delta']['content'];
-                    $fullResponse .= $token;
-                    $onChunk($token);
+                    if ($token !== '') {
+                        $fullResponse .= $token;
+                        $onChunk($token);
+                    }
+                } elseif (isset($json['choices'][0]['delta']['reasoning'])) {
+                    $reasoningText .= $json['choices'][0]['delta']['reasoning'];
                 }
             }
             return strlen($data);
         });
 
         curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
         curl_close($ch);
 
+        // Handle transport / curl failure
         if ($curlError && empty($fullResponse)) {
-            $err = "Stream Connection Error: {$curlError}";
+            $err = "⚠️ Connection Error: {$curlError}";
+            Log::error('AiService cURL error', ['error' => $curlError]);
             $onChunk($err);
             return $err;
+        }
+
+        // Handle HTTP error (e.g. 400, 401, 404, 429)
+        if ($httpCode >= 400 && empty($fullResponse)) {
+            $errMsg = "API Error ({$httpCode})";
+            if (!empty($rawErrorBody)) {
+                $errJson = json_decode($rawErrorBody, true);
+                if (!empty($errJson['error']['message'])) {
+                    $errMsg .= ': ' . $errJson['error']['message'];
+                } else {
+                    $errMsg .= ': ' . substr($rawErrorBody, 0, 200);
+                }
+            }
+            Log::error('AiService stream HTTP error', ['status' => $httpCode, 'body' => $rawErrorBody]);
+            $onChunk("⚠️ {$errMsg}");
+            return "⚠️ {$errMsg}";
+        }
+
+        // If content is empty but model produced reasoning, fallback to reasoning
+        if (empty(trim($fullResponse)) && !empty(trim($reasoningText))) {
+            $fullResponse = $reasoningText;
+            $onChunk($fullResponse);
+            return $fullResponse;
+        }
+
+        // Final sanity check for blank response
+        if (empty(trim($fullResponse))) {
+            $emptyMsg = "⚠️ Empty response received from {$providerConfig['name']} (model: {$model}). Please try again or check settings.";
+            $onChunk($emptyMsg);
+            return $emptyMsg;
         }
 
         return $fullResponse;

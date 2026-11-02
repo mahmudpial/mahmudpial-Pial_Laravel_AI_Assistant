@@ -19,18 +19,23 @@ Add these keys and values in the **Environment** tab of your Render service:
 | `APP_ENV` | `"production"` | Production environment |
 | `APP_KEY` | `base64:your_key_here` | Copy from your local `.env` |
 | `APP_DEBUG` | `"false"` | Disable debug for security |
-| `APP_URL` | `"https://your-app.onrender.com"` | Your Render URL |
+| `APP_URL` | `"https://your-app.onrender.com"` | Your actual Render HTTPS URL |
 
 ### Database Settings (SQLite)
 | Key | Value | Note |
 | :--- | :--- | :--- |
 | `DB_CONNECTION` | `"sqlite"` | Use SQLite driver |
-| `DB_DATABASE` | `"/var/lib/data/database.sqlite"` | Path on the persistent disk |
+| `DB_DATABASE` | `"/var/lib/data/database.sqlite"` | Path on the persistent disk (or leave blank to use default) |
 
-### AI Service Settings
+### AI Service Settings (Select your provider)
 | Key | Value | Note |
 | :--- | :--- | :--- |
-| `GEMINI_API_KEY` | `"your_api_key_here"` | From Google AI Studio |
+| `AI_PROVIDER` | `"groq"` | Default provider (`groq`, `openai`, `gemini`, `deepseek`) |
+| `GROQ_API_KEY` | `"gsk_..."` | Groq LPU API Key |
+| `GROQ_MODEL` | `"openai/gpt-oss-120b"` | Active Groq model identifier |
+| `OPENAI_API_KEY` | `"sk-..."` | (Optional) OpenAI API Key |
+| `DEEPSEEK_API_KEY`| `"sk-..."` | (Optional) DeepSeek API Key |
+| `GEMINI_API_KEY` | `"AIza..."` | (Optional) Google Gemini API Key |
 
 ### Cache & Session Settings
 | Key | Value | Note |
@@ -41,9 +46,8 @@ Add these keys and values in the **Environment** tab of your Render service:
 
 ---
 
-## 3. Persistent Disk Setup (CRITICAL)
-Because Render's file system is ephemeral, you **must** add a disk to prevent your database from being deleted on every restart.
-
+## 3. Persistent Disk Setup (Recommended for SQLite)
+Because Render's container file system is ephemeral on restarts:
 1. Go to the **Disks** tab in your Render service.
 2. Click **Add Disk**.
 3. **Name:** `laravel-data`
@@ -52,14 +56,11 @@ Because Render's file system is ephemeral, you **must** add a disk to prevent yo
 
 ---
 
-## 4. Post-Deployment Step
-After the site is successfully deployed, you must run the migrations to create the database tables:
+## 4. Automated Startup & Migrations
+The container `entrypoint.sh` script automatically:
+- Purges any stale local Vite dev markers (`public/hot`) so production CSS/JS always load cleanly over HTTPS.
+- Automatically initializes the SQLite database file and directory with proper `www-data` permissions.
+- Automatically executes `php artisan migrate --force` on boot.
+- Automatically seeds the initial admin account (`admin@example.com` / `password`).
+- Dynamically adapts to Render's assigned `$PORT`.
 
-1. Go to the **Shell** tab in your Render dashboard.
-2. Run the following command:
-   ```bash
-   php artisan migrate --force
-   ```
-
----
-**Prepared by Codex**
