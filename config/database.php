@@ -3,6 +3,14 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+$databaseTarget = (string) env('DB_DATABASE', '');
+$defaultConn = env('DB_CONNECTION', 'sqlite');
+
+// Auto-correct: If DB_DATABASE points to an SQLite file path, use sqlite driver
+if (str_ends_with($databaseTarget, '.sqlite') || str_ends_with($databaseTarget, '.db')) {
+    $defaultConn = 'sqlite';
+}
+
 return [
 
     /*
@@ -17,7 +25,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => $defaultConn,
 
     /*
     |--------------------------------------------------------------------------
@@ -34,7 +42,7 @@ return [
 
         'sqlite' => [
             'driver' => 'sqlite',
-            'url' => env('DB_URL'),
+            'url' => env('DB_URL', env('DATABASE_URL')),
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
@@ -46,7 +54,7 @@ return [
 
         'mysql' => [
             'driver' => 'mysql',
-            'url' => env('DB_URL'),
+            'url' => env('DB_URL', env('DATABASE_URL')),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
             'database' => env('DB_DATABASE', 'laravel'),
@@ -66,7 +74,7 @@ return [
 
         'mariadb' => [
             'driver' => 'mariadb',
-            'url' => env('DB_URL'),
+            'url' => env('DB_URL', env('DATABASE_URL')),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
             'database' => env('DB_DATABASE', 'laravel'),
@@ -86,7 +94,7 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
+            'url' => env('DB_URL', env('DATABASE_URL')),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
