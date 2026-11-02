@@ -242,7 +242,7 @@
                     testResultBox.style.background = 'rgba(16, 185, 129, 0.12)';
                     testResultBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
                     testResultBox.style.color = 'var(--status-success)';
-                    testResultBox.innerHTML = `<strong>✅ Success!</strong> Connected to <strong>${data.provider.toUpperCase()}</strong> (${data.model}). Response: "<em>${data.reply}</em>"`;
+                    testResultBox.innerHTML = `<strong>Success!</strong> Connected to <strong>${data.provider.toUpperCase()}</strong> (${data.model}). Response: "<em>${data.reply}</em>"`;
                 } else {
                     testResultBox.style.background = 'rgba(239, 68, 68, 0.12)';
                     testResultBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';

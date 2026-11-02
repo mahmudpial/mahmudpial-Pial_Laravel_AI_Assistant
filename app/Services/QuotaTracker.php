@@ -96,14 +96,14 @@ class QuotaTracker
         $limit = self::DAILY_LIMIT;
 
         if (self::isExhausted()) {
-            return '⛔ Quota exhausted (0/' . $limit . ')';
+            return 'Quota exhausted (0/' . $limit . ')';
         }
 
         if (self::isLow()) {
-            return '⚠️  Low quota: ' . $remaining . '/' . $limit . ' (' . $percent . '%)';
+            return 'Low quota: ' . $remaining . '/' . $limit . ' (' . $percent . '%)';
         }
 
-        return '✅ ' . $remaining . '/' . $limit . ' (' . $percent . '%)';
+        return $remaining . '/' . $limit . ' (' . $percent . '%)';
     }
 
     public static function getStatusClass(): string
