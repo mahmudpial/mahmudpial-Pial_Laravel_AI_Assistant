@@ -35,6 +35,7 @@ class ChatController extends Controller
         $quotaStatus = QuotaTracker::getStatus();
         $isLowQuota = QuotaTracker::isLow() || QuotaTracker::isExhausted();
         $quotaFillClass = QuotaTracker::getFillClass();
+        $personas = AiService::PERSONAS;
 
         return view('chat', compact(
             'history',
@@ -42,7 +43,8 @@ class ChatController extends Controller
             'activeConversation',
             'quotaStatus',
             'isLowQuota',
-            'quotaFillClass'
+            'quotaFillClass',
+            'personas'
         ));
     }
 
@@ -73,6 +75,7 @@ class ChatController extends Controller
         $quotaStatus = QuotaTracker::getStatus();
         $isLowQuota = QuotaTracker::isLow() || QuotaTracker::isExhausted();
         $quotaFillClass = QuotaTracker::getFillClass();
+        $personas = AiService::PERSONAS;
 
         return view('chat', compact(
             'history',
@@ -80,7 +83,8 @@ class ChatController extends Controller
             'activeConversation',
             'quotaStatus',
             'isLowQuota',
-            'quotaFillClass'
+            'quotaFillClass',
+            'personas'
         ));
     }
 
@@ -89,9 +93,11 @@ class ChatController extends Controller
      */
     public function send(Request $request): JsonResponse
     {
+        $validPersonas = implode(',', array_keys(AiService::PERSONAS));
         $request->validate([
             'message' => 'required|string|max:4000',
             'conversation_id' => 'nullable|integer',
+            'persona' => 'nullable|string|in:' . $validPersonas,
         ]);
 
         if (QuotaTracker::isExhausted()) {
@@ -107,6 +113,7 @@ class ChatController extends Controller
         $userId = Auth::id();
         $messageText = trim($request->input('message'));
         $conversationId = $request->input('conversation_id');
+        $persona = $request->input('persona');
 
         // Resolve or create conversation
         if ($conversationId) {
@@ -137,8 +144,8 @@ class ChatController extends Controller
             ];
         }
 
-        // Call AI Service
-        $reply = $this->ai->chat($history);
+        // Call AI Service with persona
+        $reply = $this->ai->chat($history, $persona);
 
         // Store AI reply in DB
         Message::create([
@@ -166,9 +173,11 @@ class ChatController extends Controller
      */
     public function stream(Request $request): StreamedResponse|JsonResponse
     {
+        $validPersonas = implode(',', array_keys(AiService::PERSONAS));
         $request->validate([
             'message' => 'required|string|max:4000',
             'conversation_id' => 'nullable|integer',
+            'persona' => 'nullable|string|in:' . $validPersonas,
         ]);
 
         if (QuotaTracker::isExhausted()) {
@@ -184,6 +193,7 @@ class ChatController extends Controller
         $userId = Auth::id();
         $messageText = trim($request->input('message'));
         $conversationId = $request->input('conversation_id');
+        $persona = $request->input('persona');
 
         if ($conversationId) {
             $conversation = Conversation::where('user_id', $userId)->findOrFail($conversationId);
@@ -212,7 +222,7 @@ class ChatController extends Controller
 
         $aiService = $this->ai;
 
-        return new StreamedResponse(function () use ($conversation, $history, $aiService) {
+        return new StreamedResponse(function () use ($conversation, $history, $aiService, $persona) {
             while (ob_get_level() > 0) {
                 ob_end_clean();
             }
@@ -225,11 +235,11 @@ class ChatController extends Controller
             ]) . "\n\n";
             flush();
 
-            // Stream chunks
+            // Stream chunks with persona
             $fullReply = $aiService->stream($history, function ($token) {
                 echo "data: " . json_encode(['type' => 'chunk', 'content' => $token]) . "\n\n";
                 flush();
-            });
+            }, $persona);
 
             // Persist full reply in DB with safety check
             $replyToSave = !empty(trim($fullReply)) ? $fullReply : '⚠️ Empty reply received from AI provider.';

@@ -203,6 +203,38 @@
                         <span class="latency-dot"></span>
                         <span style="text-transform: capitalize;">{{ App\Services\AiService::getActiveProvider() }}: {{ App\Services\AiService::getActiveModel() }}</span>
                     </div>
+
+                    <!-- AI Persona Selector -->
+                    <div class="persona-dropdown-container" id="persona-dropdown-container">
+                        <button type="button" class="persona-btn" id="persona-btn" title="Choose AI Expert Persona">
+                            <i data-lucide="layers" id="persona-btn-icon" style="width: 14px; height: 14px; color: var(--accent-primary);"></i>
+                            <span id="persona-btn-text">Laravel Architect</span>
+                            <span class="persona-active-badge" id="persona-btn-badge">Architect</span>
+                            <i data-lucide="chevron-down" style="width: 12px; height: 12px; opacity: 0.6;"></i>
+                        </button>
+                        <div class="persona-dropdown" id="persona-dropdown">
+                            <div class="persona-dropdown-header">
+                                <span>AI Expert Personas</span>
+                                <span class="persona-dropdown-sub">Custom Specialized Prompts</span>
+                            </div>
+                            <div class="persona-list">
+                                @foreach($personas as $key => $p)
+                                    <button type="button" class="persona-item" data-key="{{ $key }}" data-name="{{ $p['name'] }}" data-badge="{{ $p['badge'] }}" data-icon="{{ $p['icon'] }}">
+                                        <div class="persona-item-icon">
+                                            <i data-lucide="{{ $p['icon'] }}" style="width: 16px; height: 16px;"></i>
+                                        </div>
+                                        <div class="persona-item-info">
+                                            <div class="persona-item-title-row">
+                                                <span class="persona-item-name">{{ $p['name'] }}</span>
+                                                <span class="persona-badge-tag">{{ $p['badge'] }}</span>
+                                            </div>
+                                            <div class="persona-item-desc">{{ $p['description'] }}</div>
+                                        </div>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="header-right">
@@ -211,6 +243,36 @@
                         <span id="quota-text">{{ $quotaStatus ?? '1,500 / 1,500' }}</span>
                         <div class="quota-mini-progress">
                             <div id="quota-mini-fill" class="quota-mini-fill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Export Chat Dropdown -->
+                    <div class="export-dropdown-container" id="export-dropdown-container">
+                        <button class="icon-btn" id="export-chat-btn" title="Export Conversation">
+                            <i data-lucide="download" style="width: 17px; height: 17px;"></i>
+                        </button>
+                        <div class="export-dropdown" id="export-dropdown">
+                            <button type="button" class="export-menu-item" id="export-markdown-btn">
+                                <i data-lucide="file-text" style="width: 15px; height: 15px; color: var(--accent-primary);"></i>
+                                <div class="export-item-text">
+                                    <span class="export-title">Export Markdown (.md)</span>
+                                    <span class="export-subtitle">Download clean documentation file</span>
+                                </div>
+                            </button>
+                            <button type="button" class="export-menu-item" id="export-print-btn">
+                                <i data-lucide="printer" style="width: 15px; height: 15px; color: var(--status-success);"></i>
+                                <div class="export-item-text">
+                                    <span class="export-title">Print / Save as PDF</span>
+                                    <span class="export-subtitle">Clean formatted printable view</span>
+                                </div>
+                            </button>
+                            <button type="button" class="export-menu-item" id="export-copy-btn">
+                                <i data-lucide="copy" style="width: 15px; height: 15px; color: var(--status-warning);"></i>
+                                <div class="export-item-text">
+                                    <span class="export-title">Copy Chat Text</span>
+                                    <span class="export-subtitle">Copy conversation to clipboard</span>
+                                </div>
+                            </button>
                         </div>
                     </div>
 
@@ -243,6 +305,10 @@
                                         <button class="action-btn copy-msg-btn">
                                             <i data-lucide="copy" style="width: 13px; height: 13px;"></i>
                                             <span>Copy</span>
+                                        </button>
+                                        <button class="action-btn regenerate-msg-btn" title="Regenerate this response">
+                                            <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>
+                                            <span>Regenerate</span>
                                         </button>
                                         @if(isset($turn['created_at']))
                                             <span style="font-size: 0.72rem; color: var(--text-muted); margin-left: 6px;">{{ $turn['created_at'] }}</span>
@@ -300,10 +366,23 @@
 
             <!-- Input Bar -->
             <div class="input-area">
+                <!-- Floating Stop Generating Button (active during SSE stream) -->
+                <div class="stop-generation-container" id="stop-generation-container" style="display: none;">
+                    <button type="button" class="stop-generation-btn" id="stop-generation-btn">
+                        <i data-lucide="square" style="width: 13px; height: 13px; fill: currentColor;"></i>
+                        <span>Stop Generating</span>
+                    </button>
+                </div>
+
                 <div class="input-container">
                     <textarea id="message-input" class="chat-textarea" placeholder="Message AI Assistant (Shift+Enter for new line)..." rows="1"></textarea>
                     <div class="input-footer">
                         <div class="input-hint">
+                            <span class="active-persona-indicator" id="active-persona-indicator" title="Current Active Persona">
+                                <i data-lucide="layers" id="input-persona-icon" style="width: 12px; height: 12px;"></i>
+                                <span id="input-persona-label">Architect</span>
+                            </span>
+                            <span class="hint-divider">•</span>
                             <i data-lucide="corner-down-left" style="width: 13px; height: 13px;"></i>
                             <span>Return to send</span>
                         </div>

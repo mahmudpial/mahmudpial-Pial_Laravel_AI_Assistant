@@ -1583,3 +1583,384 @@ html, body {
     background: var(--accent-primary);
     color: #ffffff;
 }
+
+/* ==========================================================================
+   Top 3 Premium Features: Personas, Stop Generation, Export Chat & Print
+   ========================================================================== */
+
+/* ── 1. AI Personas Selector ─────────────────────────────── */
+.persona-dropdown-container {
+    position: relative;
+    display: inline-block;
+}
+
+.persona-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+}
+
+.persona-btn:hover {
+    border-color: var(--accent-border);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-sm);
+}
+
+.persona-active-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--accent-subtle);
+    color: var(--accent-primary);
+    border: 1px solid var(--accent-border);
+}
+
+.persona-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 340px;
+    max-width: 420px;
+    max-height: 460px;
+    overflow-y: auto;
+    z-index: 1000;
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: 14px;
+    box-shadow: var(--shadow-floating);
+    backdrop-filter: blur(16px);
+    padding: 8px;
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    pointer-events: none;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.persona-dropdown.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.persona-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.persona-dropdown-sub {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.persona-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 6px;
+}
+
+.persona-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.persona-item:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-subtle);
+    transform: translateX(2px);
+}
+
+.persona-item.active {
+    background: var(--accent-subtle);
+    border-color: var(--accent-border);
+}
+
+.persona-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-primary);
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+
+.persona-item.active .persona-item-icon {
+    background: var(--accent-primary);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.persona-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.persona-item-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.persona-item-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.persona-badge-tag {
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+}
+
+.persona-item.active .persona-badge-tag {
+    background: var(--accent-primary);
+    color: #ffffff;
+}
+
+.persona-item-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+
+.active-persona-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--accent-primary);
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.hint-divider {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+/* ── 2. Stop Generation Button ────────────────────────────── */
+.stop-generation-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.stop-generation-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 18px;
+    border-radius: 9999px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #f87171;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.15);
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: stopPulse 2s infinite ease-in-out;
+}
+
+.stop-generation-btn:hover {
+    background: rgba(239, 68, 68, 0.22);
+    border-color: rgba(239, 68, 68, 0.65);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+}
+
+@keyframes stopPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    }
+}
+
+/* ── 3. Export Conversation Dropdown ──────────────────────── */
+.export-dropdown-container {
+    position: relative;
+    display: inline-block;
+}
+
+.export-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 270px;
+    z-index: 1000;
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    box-shadow: var(--shadow-floating);
+    backdrop-filter: blur(16px);
+    padding: 6px;
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    pointer-events: none;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.export-dropdown.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.export-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: var(--text-primary);
+}
+
+.export-menu-item:hover {
+    background: var(--bg-elevated);
+}
+
+.export-item-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.export-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.export-subtitle {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* ── 4. Print Formatting & Clean PDF Export ───────────────── */
+@media print {
+    body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+    }
+
+    #sidebar,
+    .top-header,
+    .input-area,
+    .quota-bar-wrapper,
+    .drawer-backdrop,
+    .modal-overlay,
+    #toast,
+    .message-actions,
+    .brand-icon,
+    .empty-state {
+        display: none !important;
+    }
+
+    .app-container {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .chat-window {
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+    }
+
+    .chat-container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .message {
+        page-break-inside: avoid;
+        margin-bottom: 20px !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        padding: 16px !important;
+        background: #f8fafc !important;
+        color: #0f172a !important;
+        box-shadow: none !important;
+    }
+
+    .message.user {
+        background: #eef2ff !important;
+        border-color: #c7d2fe !important;
+    }
+
+    .message-body {
+        color: #0f172a !important;
+        font-size: 11pt !important;
+        line-height: 1.5 !important;
+    }
+
+    pre, code {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
+        page-break-inside: avoid;
+    }
+
+    .code-header {
+        display: none !important;
+    }
+}

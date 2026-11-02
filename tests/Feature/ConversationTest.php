@@ -50,3 +50,36 @@ test('authenticated user can delete their conversation', function () {
         'id' => $conversation->id,
     ]);
 });
+
+test('authenticated user can send message with a valid persona', function () {
+    $user = User::factory()->create();
+
+    $aiMock = Mockery::mock(App\Services\AiService::class);
+    $aiMock->shouldReceive('chat')
+        ->once()
+        ->withArgs(function ($history, $persona) {
+            return $persona === 'debugger';
+        })
+        ->andReturn('Mocked debugger reply');
+    $this->app->instance(App\Services\AiService::class, $aiMock);
+
+    $response = $this->actingAs($user)->postJson('/chat/send', [
+        'message' => 'Fix this null pointer exception in PostController',
+        'persona' => 'debugger',
+    ]);
+
+    $response->assertStatus(200)
+        ->assertJsonFragment(['reply' => 'Mocked debugger reply']);
+});
+
+test('sending chat message with invalid persona fails validation', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->postJson('/chat/send', [
+        'message' => 'Hello AI',
+        'persona' => 'invalid_persona_xyz',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['persona']);
+});

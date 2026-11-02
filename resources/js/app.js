@@ -21,11 +21,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const toast = document.getElementById('toast');
     const toastMsg = document.getElementById('toast-msg');
 
-    let toastTimeout = null;
+    // New Features DOM Elements (Persona, Stop, Export)
+    const personaBtn = document.getElementById('persona-btn');
+    const personaDropdown = document.getElementById('persona-dropdown');
+    const personaBtnText = document.getElementById('persona-btn-text');
+    const personaBtnBadge = document.getElementById('persona-btn-badge');
+    const personaBtnIcon = document.getElementById('persona-btn-icon');
+    const inputPersonaLabel = document.getElementById('input-persona-label');
+    const inputPersonaIcon = document.getElementById('input-persona-icon');
+    const stopBtnContainer = document.getElementById('stop-generation-container');
+    const stopBtn = document.getElementById('stop-generation-btn');
+    const exportChatBtn = document.getElementById('export-chat-btn');
+    const exportDropdown = document.getElementById('export-dropdown');
+    const exportMarkdownBtn = document.getElementById('export-markdown-btn');
+    const exportPrintBtn = document.getElementById('export-print-btn');
+    const exportCopyBtn = document.getElementById('export-copy-btn');
 
-    // ── 1. Initialize Icons, Themes & History ─────────────────
+    let toastTimeout = null;
+    let activeAbortController = null;
+    let activeReader = null;
+    let isStreaming = false;
+    let activePersona = localStorage.getItem('pial_persona') || 'architect';
+
+    // ── 1. Initialize Icons, Themes, Personas & History ───────
     refreshIcons();
     initTheme();
+    initPersona();
+    initExportDropdown();
     hydrateHistory();
 
     function refreshIcons() {
@@ -60,7 +82,174 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshIcons();
     }
 
-    // ── 2. Toast Notification ────────────────────────────────
+    // ── 2. AI Personas System ────────────────────────────────
+    function initPersona() {
+        const item = document.querySelector(`.persona-item[data-key="${activePersona}"]`);
+        if (item) {
+            updatePersonaUI(
+                activePersona,
+                item.getAttribute('data-name'),
+                item.getAttribute('data-badge'),
+                item.getAttribute('data-icon')
+            );
+        }
+
+        if (personaBtn && personaDropdown) {
+            personaBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                personaDropdown.classList.toggle('show');
+                if (exportDropdown) exportDropdown.classList.remove('show');
+            });
+        }
+
+        document.querySelectorAll('.persona-item').forEach((item) => {
+            item.addEventListener('click', () => {
+                const key = item.getAttribute('data-key');
+                const name = item.getAttribute('data-name');
+                const badge = item.getAttribute('data-badge');
+                const icon = item.getAttribute('data-icon');
+
+                activePersona = key;
+                localStorage.setItem('pial_persona', key);
+                updatePersonaUI(key, name, badge, icon);
+                if (personaDropdown) personaDropdown.classList.remove('show');
+                window.showToast(`AI Persona: ${name}`);
+            });
+        });
+    }
+
+    function updatePersonaUI(key, name, badge, icon) {
+        if (personaBtnText) personaBtnText.textContent = name;
+        if (personaBtnBadge) personaBtnBadge.textContent = badge;
+        if (personaBtnIcon && icon) personaBtnIcon.setAttribute('data-lucide', icon);
+        if (inputPersonaLabel) inputPersonaLabel.textContent = badge;
+        if (inputPersonaIcon && icon) inputPersonaIcon.setAttribute('data-lucide', icon);
+
+        document.querySelectorAll('.persona-item').forEach((el) => {
+            if (el.getAttribute('data-key') === key) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
+            }
+        });
+        refreshIcons();
+    }
+
+    // ── 3. Export Conversation System ────────────────────────
+    function initExportDropdown() {
+        if (exportChatBtn && exportDropdown) {
+            exportChatBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                exportDropdown.classList.toggle('show');
+                if (personaDropdown) personaDropdown.classList.remove('show');
+            });
+        }
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', () => {
+            if (personaDropdown) personaDropdown.classList.remove('show');
+            if (exportDropdown) exportDropdown.classList.remove('show');
+        });
+
+        // 1. Export as Markdown
+        if (exportMarkdownBtn) {
+            exportMarkdownBtn.addEventListener('click', () => {
+                exportConversationMarkdown();
+            });
+        }
+
+        // 2. Print / Save as PDF
+        if (exportPrintBtn) {
+            exportPrintBtn.addEventListener('click', () => {
+                if (exportDropdown) exportDropdown.classList.remove('show');
+                window.print();
+            });
+        }
+
+        // 3. Copy Full Chat Text
+        if (exportCopyBtn) {
+            exportCopyBtn.addEventListener('click', async () => {
+                const text = buildConversationMarkdown();
+                try {
+                    await navigator.clipboard.writeText(text);
+                    window.showToast('Conversation copied to clipboard');
+                } catch (e) {
+                    window.showToast('Failed to copy conversation');
+                }
+                if (exportDropdown) exportDropdown.classList.remove('show');
+            });
+        }
+    }
+
+    function buildConversationMarkdown() {
+        const messages = chatContainer ? chatContainer.querySelectorAll('.message') : [];
+        if (!messages.length) return '# Pial AI Assistant Chat\n\n*No messages in this chat.*';
+
+        let md = `# Pial AI Assistant Conversation\n*Exported on ${new Date().toLocaleString()}*\n\n---\n\n`;
+
+        messages.forEach((msg) => {
+            const isUser = msg.classList.contains('user');
+            const body = msg.querySelector('.message-body');
+            const content = body ? (body.innerText || body.textContent).trim() : '';
+
+            if (isUser) {
+                md += `### 🧑 User\n\n${content}\n\n---\n\n`;
+            } else {
+                md += `### 🤖 Assistant\n\n${content}\n\n---\n\n`;
+            }
+        });
+
+        return md;
+    }
+
+    function exportConversationMarkdown() {
+        if (exportDropdown) exportDropdown.classList.remove('show');
+        const md = buildConversationMarkdown();
+        const convId = activeConversationInput ? activeConversationInput.value : 'export';
+        const filename = `pial-chat-${convId || 'session'}-${Date.now()}.md`;
+
+        const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        window.showToast('Markdown file downloaded');
+    }
+
+    // ── 4. Stop Generation System ────────────────────────────
+    if (stopBtn) {
+        stopBtn.addEventListener('click', () => {
+            window.stopGeneration();
+        });
+    }
+
+    window.stopGeneration = async function () {
+        if (!isStreaming) return;
+
+        if (activeReader) {
+            try {
+                await activeReader.cancel();
+            } catch (e) {
+                console.warn('Reader cancel:', e);
+            }
+        }
+
+        if (activeAbortController) {
+            try {
+                activeAbortController.abort();
+            } catch (e) {}
+        }
+
+        isStreaming = false;
+        if (stopBtnContainer) stopBtnContainer.style.display = 'none';
+        setSendingState(false);
+        window.showToast('Generation stopped');
+    };
     window.showToast = function (message) {
         if (!toast || !toastMsg) return;
         toastMsg.textContent = message;
@@ -174,12 +363,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show Typing Indicator
             const typingId = showTypingIndicator();
             setSendingState(true);
+            isStreaming = true;
+            if (stopBtnContainer) stopBtnContainer.style.display = 'flex';
+
+            activeAbortController = new AbortController();
 
             try {
                 const convId = activeConversationInput ? activeConversationInput.value : null;
 
                 const response = await fetch('/chat/stream', {
                     method: 'POST',
+                    signal: activeAbortController.signal,
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': getCsrfToken(),
@@ -188,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({
                         message: text,
                         conversation_id: convId ? parseInt(convId) : null,
+                        persona: activePersona,
                     }),
                 });
 
@@ -206,7 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     appendAIMessage(errText);
-                    setSendingState(false);
                     return;
                 }
 
@@ -224,6 +418,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <i data-lucide="copy" style="width: 13px; height: 13px;"></i>
                                 <span>Copy</span>
                             </button>
+                            <button class="action-btn regenerate-msg-btn" title="Regenerate this response">
+                                <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>
+                                <span>Regenerate</span>
+                            </button>
                             <span style="font-size: 0.72rem; color: var(--text-muted); margin-left: 6px;">Just now</span>
                         </div>
                     </div>
@@ -236,12 +434,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 let accumulatedText = '';
 
                 // Read SSE stream
-                const reader = response.body.getReader();
+                activeReader = response.body.getReader();
                 const decoder = new TextDecoder('utf-8');
                 let buffer = '';
 
                 while (true) {
-                    const { done, value } = await reader.read();
+                    const { done, value } = await activeReader.read();
                     if (done) break;
 
                     buffer += decoder.decode(value, { stream: true });
@@ -300,10 +498,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 refreshIcons();
 
             } catch (err) {
-                console.error(err);
-                removeElement(typingId);
-                appendAIMessage('⚠️ Stream connection error. Please try again.');
+                if (err.name === 'AbortError') {
+                    // User clicked stop generation, clean up silently
+                } else {
+                    console.error(err);
+                    removeElement(typingId);
+                    appendAIMessage('⚠️ Stream connection error. Please try again.');
+                }
             } finally {
+                isStreaming = false;
+                if (stopBtnContainer) stopBtnContainer.style.display = 'none';
+                activeReader = null;
+                activeAbortController = null;
                 setSendingState(false);
                 scrollToBottom();
             }
@@ -349,6 +555,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="action-btn copy-msg-btn">
                         <i data-lucide="copy" style="width: 13px; height: 13px;"></i>
                         <span>Copy</span>
+                    </button>
+                    <button class="action-btn regenerate-msg-btn" title="Regenerate this response">
+                        <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>
+                        <span>Regenerate</span>
                     </button>
                     <span style="font-size: 0.72rem; color: var(--text-muted); margin-left: 6px;">Just now</span>
                 </div>
@@ -468,6 +678,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.showToast('Response copied to clipboard');
                 } catch (e) {
                     window.showToast('Failed to copy response');
+                }
+            });
+        }
+
+        const regenBtn = msgContainer.querySelector('.regenerate-msg-btn');
+        if (regenBtn) {
+            regenBtn.addEventListener('click', () => {
+                // Find previous user message
+                let prev = msgContainer.previousElementSibling;
+                while (prev && !prev.classList.contains('user')) {
+                    prev = prev.previousElementSibling;
+                }
+
+                if (prev) {
+                    const userBody = prev.querySelector('.message-body');
+                    const prompt = userBody ? userBody.textContent.trim() : '';
+                    if (prompt) {
+                        window.showToast('Regenerating response...');
+                        window.sendPrompt(prompt);
+                    }
+                } else {
+                    window.showToast('Could not find prompt to regenerate');
                 }
             });
         }

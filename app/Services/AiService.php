@@ -35,6 +35,51 @@ class AiService
         ],
     ];
 
+    public const PERSONAS = [
+        'architect' => [
+            'name' => 'Laravel Architect',
+            'icon' => 'layers',
+            'badge' => 'Architect',
+            'description' => 'Clean architecture, design patterns, scalable structure',
+            'prompt' => "Role: Senior Laravel Architect & Principal Engineer.\nFocus: Clean architecture, DDD, repository/service patterns, SOLID principles, high scalability, and maintainability in Laravel 11 and modern PHP 8.4.",
+        ],
+        'debugger' => [
+            'name' => 'Bug & Error Debugger',
+            'icon' => 'bug',
+            'badge' => 'Debugger',
+            'description' => 'Fix stack traces, exceptions, and runtime issues',
+            'prompt' => "Role: Elite PHP & Laravel Debugger.\nFocus: Analyze stack traces, pinpoint exact root causes, explain why they occurred, and provide bulletproof copy-paste code fixes.",
+        ],
+        'tester' => [
+            'name' => 'Test Specialist (Pest/PHPUnit)',
+            'icon' => 'check-circle',
+            'badge' => 'Tester',
+            'description' => 'Write Pest & PHPUnit tests with high coverage',
+            'prompt' => "Role: Test Automation Specialist.\nFocus: Author expressive Pest v3 and PHPUnit tests. Cover feature tests, unit tests, mock objects, authentication, database assertions, and edge cases.",
+        ],
+        'optimizer' => [
+            'name' => 'SQL & Query Optimizer',
+            'icon' => 'database',
+            'badge' => 'Optimizer',
+            'description' => 'Optimize Eloquent, eliminate N+1, index tuning',
+            'prompt' => "Role: Database Performance & Query Optimization Engineer.\nFocus: Eliminate N+1 issues, optimize Eloquent relationships, design composite indexes, and maximize SQL throughput.",
+        ],
+        'frontend' => [
+            'name' => 'Tailwind & UI/UX Specialist',
+            'icon' => 'palette',
+            'badge' => 'UI/UX',
+            'description' => 'Modern Blade, Tailwind CSS, Vue/Alpine components',
+            'prompt' => "Role: Senior Frontend Engineer for Laravel.\nFocus: Craft visually stunning Blade components with Tailwind CSS v4, smooth animations, accessibility, and modern responsive layouts.",
+        ],
+        'security' => [
+            'name' => 'Security & Pentest Auditor',
+            'icon' => 'shield-alert',
+            'badge' => 'Security',
+            'description' => 'Sanctum, CSRF, XSS, rate limiting, and RBAC',
+            'prompt' => "Role: Application Security Engineer.\nFocus: Audit code against OWASP Top 10 vulnerabilities, CSRF, XSS, SQL injection, Mass Assignment, Sanctum token security, and RBAC.",
+        ],
+    ];
+
     private const DEFAULT_SYSTEM_PROMPT = <<<PROMPT
 You are an expert Laravel and Web Engineering assistant built by Pial Mahmud.
 Role:
@@ -89,7 +134,7 @@ PROMPT;
     /**
      * Send standard synchronous chat request.
      */
-    public function chat(array $history): string
+    public function chat(array $history, ?string $persona = null): string
     {
         $provider = self::getActiveProvider();
         $providerConfig = self::PROVIDERS[$provider] ?? self::PROVIDERS['groq'];
@@ -100,7 +145,7 @@ PROMPT;
             return "⚠️ The API key for {$providerConfig['name']} is missing. Please configure it in settings or the Admin Panel.";
         }
 
-        $messages = $this->buildMessagesArray($history);
+        $messages = $this->buildMessagesArray($history, $persona);
 
         try {
             $response = Http::timeout(45)
@@ -132,7 +177,7 @@ PROMPT;
     /**
      * Stream response token by token via Server-Sent Events (SSE).
      */
-    public function stream(array $history, callable $onChunk): string
+    public function stream(array $history, callable $onChunk, ?string $persona = null): string
     {
         $provider = self::getActiveProvider();
         $providerConfig = self::PROVIDERS[$provider] ?? self::PROVIDERS['groq'];
@@ -145,7 +190,7 @@ PROMPT;
             return $err;
         }
 
-        $messages = $this->buildMessagesArray($history);
+        $messages = $this->buildMessagesArray($history, $persona);
         $fullResponse = '';
         $reasoningText = '';
         $rawErrorBody = '';
@@ -254,10 +299,16 @@ PROMPT;
         return $fullResponse;
     }
 
-    private function buildMessagesArray(array $history): array
+    private function buildMessagesArray(array $history, ?string $persona = null): array
     {
         $messages = [];
-        $messages[] = ['role' => 'system', 'content' => self::getSystemPrompt()];
+        $systemPrompt = self::getSystemPrompt();
+
+        if ($persona && isset(self::PERSONAS[$persona])) {
+            $systemPrompt .= "\n\n[Active Persona: " . self::PERSONAS[$persona]['name'] . "]\n" . self::PERSONAS[$persona]['prompt'];
+        }
+
+        $messages[] = ['role' => 'system', 'content' => $systemPrompt];
 
         foreach ($history as $turn) {
             $messages[] = [
