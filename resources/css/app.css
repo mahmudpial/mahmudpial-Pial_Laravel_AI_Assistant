@@ -1779,42 +1779,100 @@ html, body {
     opacity: 0.6;
 }
 
-/* ── 2. Stop Generation Button ────────────────────────────── */
-.stop-generation-container {
+/* ── 2. Stop Generation Button (In Chat Section & Morphing Send Btn) ─── */
+.chat-stop-floating-wrapper {
+    position: sticky;
+    bottom: 12px;
     display: flex;
     justify-content: center;
-    align-items: center;
-    margin-bottom: 10px;
-    animation: fadeIn 0.2s ease-in-out;
+    width: 100%;
+    z-index: 60;
+    margin-top: auto;
+    pointer-events: none;
+    animation: stopFadeInUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.stop-generation-btn {
+.chat-stop-floating-btn {
+    pointer-events: auto;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 18px;
+    gap: 9px;
+    padding: 8px 18px;
     border-radius: 9999px;
-    background: rgba(239, 68, 68, 0.12);
-    border: 1px solid rgba(239, 68, 68, 0.4);
-    color: #f87171;
-    font-size: 0.8rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    font-family: var(--font-primary);
+    font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.15);
-    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-    animation: stopPulse 2s infinite ease-in-out;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
 }
 
-.stop-generation-btn:hover {
-    background: rgba(239, 68, 68, 0.22);
-    border-color: rgba(239, 68, 68, 0.65);
-    transform: translateY(-1px) scale(1.02);
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+.chat-stop-floating-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    border-color: #ef4444;
+    color: #ef4444;
+    background: var(--bg-elevated);
+    box-shadow: 0 8px 26px rgba(239, 68, 68, 0.28);
 }
 
-@keyframes stopPulse {
+.chat-stop-floating-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.chat-stop-floating-btn .stop-btn-icon-wrapper {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.chat-stop-floating-btn:hover .stop-btn-icon-wrapper {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+@keyframes stopFadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Morphing Send / Stop Button inside Input Bar */
+.send-action-btn.is-streaming {
+    background: var(--bg-elevated) !important;
+    border: 1.5px solid #ef4444 !important;
+    color: #ef4444 !important;
+    cursor: pointer !important;
+    animation: stopPulseRing 2s infinite ease-in-out;
+}
+
+.send-action-btn.is-streaming:hover {
+    background: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+    transform: scale(1.08);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4) !important;
+}
+
+@keyframes stopPulseRing {
     0%, 100% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
     }
     50% {
         box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);

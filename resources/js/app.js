@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const personaBtnIcon = document.getElementById('persona-btn-icon');
     const inputPersonaLabel = document.getElementById('input-persona-label');
     const inputPersonaIcon = document.getElementById('input-persona-icon');
-    const stopBtnContainer = document.getElementById('stop-generation-container');
-    const stopBtn = document.getElementById('stop-generation-btn');
+    const chatStopFloatingWrapper = document.getElementById('chat-stop-floating-wrapper');
+    const chatStopBtn = document.getElementById('chat-stop-btn');
     const exportChatBtn = document.getElementById('export-chat-btn');
     const exportDropdown = document.getElementById('export-dropdown');
     const exportMarkdownBtn = document.getElementById('export-markdown-btn');
@@ -222,8 +222,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ── 4. Stop Generation System ────────────────────────────
-    if (stopBtn) {
-        stopBtn.addEventListener('click', () => {
+    if (chatStopBtn) {
+        chatStopBtn.addEventListener('click', () => {
             window.stopGeneration();
         });
     }
@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         isStreaming = false;
-        if (stopBtnContainer) stopBtnContainer.style.display = 'none';
+        if (chatStopFloatingWrapper) chatStopFloatingWrapper.style.display = 'none';
         setSendingState(false);
         window.showToast('Generation stopped');
     };
@@ -348,6 +348,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── 7. Message Sending & AI Response ─────────────────────
     if (sendBtn && inputField && chatContainer) {
         sendBtn.addEventListener('click', async () => {
+            if (isStreaming) {
+                window.stopGeneration();
+                return;
+            }
+
             const text = inputField.value.trim();
             if (!text) return;
 
@@ -364,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const typingId = showTypingIndicator();
             setSendingState(true);
             isStreaming = true;
-            if (stopBtnContainer) stopBtnContainer.style.display = 'flex';
+            if (chatStopFloatingWrapper) chatStopFloatingWrapper.style.display = 'flex';
 
             activeAbortController = new AbortController();
 
@@ -507,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } finally {
                 isStreaming = false;
-                if (stopBtnContainer) stopBtnContainer.style.display = 'none';
+                if (chatStopFloatingWrapper) chatStopFloatingWrapper.style.display = 'none';
                 activeReader = null;
                 activeAbortController = null;
                 setSendingState(false);
@@ -518,11 +523,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setSendingState(isSending) {
         if (!sendBtn) return;
-        sendBtn.disabled = isSending;
         if (isSending) {
-            sendBtn.innerHTML = `<i data-lucide="loader-2" style="width: 18px; height: 18px; animation: spin 1s linear infinite;"></i>`;
+            sendBtn.disabled = false; // Keep enabled so clicking morphs into instant stop action!
+            sendBtn.classList.add('is-streaming');
+            sendBtn.setAttribute('title', 'Stop generating');
+            sendBtn.innerHTML = `<i data-lucide="square" style="width: 13px; height: 13px; fill: currentColor;"></i>`;
+            if (chatStopFloatingWrapper) chatStopFloatingWrapper.style.display = 'flex';
         } else {
+            sendBtn.disabled = false;
+            sendBtn.classList.remove('is-streaming');
+            sendBtn.setAttribute('title', 'Send message');
             sendBtn.innerHTML = `<i data-lucide="arrow-up" style="width: 18px; height: 18px;"></i>`;
+            if (chatStopFloatingWrapper) chatStopFloatingWrapper.style.display = 'none';
         }
         refreshIcons();
     }
@@ -753,6 +765,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
+            if (isStreaming) {
+                window.stopGeneration();
+                return;
+            }
             document.querySelectorAll('.modal-overlay.active').forEach((m) => m.classList.remove('active'));
         }
     });

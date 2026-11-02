@@ -362,18 +362,20 @@
                         </div>
                     @endforelse
                 </div>
+
+                <!-- Floating Stop Generating Button inside Chat Section (ChatGPT/Claude style) -->
+                <div class="chat-stop-floating-wrapper" id="chat-stop-floating-wrapper" style="display: none;">
+                    <button type="button" class="chat-stop-floating-btn" id="chat-stop-btn" title="Stop generating response">
+                        <span class="stop-btn-icon-wrapper">
+                            <i data-lucide="square" style="width: 12px; height: 12px; fill: currentColor;"></i>
+                        </span>
+                        <span>Stop generating</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Input Bar -->
             <div class="input-area">
-                <!-- Floating Stop Generating Button (active during SSE stream) -->
-                <div class="stop-generation-container" id="stop-generation-container" style="display: none;">
-                    <button type="button" class="stop-generation-btn" id="stop-generation-btn">
-                        <i data-lucide="square" style="width: 13px; height: 13px; fill: currentColor;"></i>
-                        <span>Stop Generating</span>
-                    </button>
-                </div>
-
                 <div class="input-container">
                     <textarea id="message-input" class="chat-textarea" placeholder="Message AI Assistant (Shift+Enter for new line)..." rows="1"></textarea>
                     <div class="input-footer">
