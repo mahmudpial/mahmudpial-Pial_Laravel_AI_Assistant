@@ -26,3 +26,18 @@ test('admin user can access admin dashboard', function () {
 
     $response->assertStatus(200);
 });
+
+test('admin user can access admin settings page', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    $response = $this->actingAs($admin)->get('/admin/settings');
+
+    $response->assertStatus(200);
+});
+
+test('guest cannot call admin test connection route', function () {
+    $response = $this->postJson('/admin/settings/test');
+
+    $response->assertStatus(401);
+});
+

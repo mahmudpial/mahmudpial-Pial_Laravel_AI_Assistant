@@ -99,4 +99,40 @@ class AdminController extends Controller
 
         return back()->with('success', 'AI and System Settings updated successfully!');
     }
+
+    /**
+     * Test active AI API connection in real-time.
+     */
+    public function testConnection()
+    {
+        try {
+            $provider = AiService::getActiveProvider();
+            $model = AiService::getActiveModel();
+
+            $reply = app(AiService::class)->chat([
+                ['role' => 'user', 'parts' => [['text' => 'Respond in exactly two words: API Connected']]]
+            ]);
+
+            if (str_starts_with($reply, 'API Error') || str_starts_with($reply, '⚠️') || str_starts_with($reply, 'Server error')) {
+                return response()->json([
+                    'success' => false,
+                    'error' => $reply,
+                    'provider' => $provider,
+                    'model' => $model,
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'reply' => $reply,
+                'provider' => $provider,
+                'model' => $model,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

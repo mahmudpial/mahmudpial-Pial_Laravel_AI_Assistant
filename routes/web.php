@@ -53,4 +53,5 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::post('/users/{id}/toggle-role', [AdminController::class, 'toggleRole'])->name('users.toggle-role');
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
     Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
+    Route::post('/settings/test', [AdminController::class, 'testConnection'])->name('settings.test');
 });

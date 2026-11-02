@@ -39,9 +39,9 @@
         }
     </style>
 </head>
-<body data-theme="dark" style="min-height: 100vh; display: flex; flex-direction: column; background: var(--bg-canvas);">
+<body data-theme="dark" style="height: 100vh; max-height: 100vh; display: flex; flex-direction: column; background: var(--bg-canvas); overflow: hidden;">
     <!-- Top Admin Bar -->
-    <header style="height: 64px; border-bottom: 1px solid var(--border-default); background: var(--bg-surface); display: flex; align-items: center; justify-content: space-between; padding: 0 24px;">
+    <header style="height: 64px; flex-shrink: 0; border-bottom: 1px solid var(--border-default); background: var(--bg-surface); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 10;">
         <div style="display: flex; align-items: center; gap: 12px;">
             <div style="width: 34px; height: 34px; border-radius: 8px; background: var(--accent-gradient); color: white; display: flex; align-items: center; justify-content: center;">
                 <i data-lucide="shield" style="width: 18px; height: 18px;"></i>
@@ -64,9 +64,9 @@
         </div>
     </header>
 
-    <div style="display: flex; flex: 1;">
+    <div style="display: flex; flex: 1; min-height: 0; overflow: hidden;">
         <!-- Admin Sidebar Nav -->
-        <aside style="width: 240px; border-right: 1px solid var(--border-default); background: var(--bg-surface); padding: 20px 12px; display: flex; flex-direction: column; gap: 6px;">
+        <aside style="width: 240px; flex-shrink: 0; border-right: 1px solid var(--border-default); background: var(--bg-surface); padding: 20px 12px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto;">
             <a href="{{ route('admin.dashboard') }}" class="admin-nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
                 <span>Overview</span>
@@ -82,7 +82,7 @@
         </aside>
 
         <!-- Main Admin Content -->
-        <main style="flex: 1; padding: 28px; overflow-y: auto;">
+        <main style="flex: 1; min-height: 0; padding: 28px 32px 80px; overflow-y: auto; scroll-behavior: smooth;">
             @if(session('success'))
                 <div style="padding: 12px 16px; border-radius: 10px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: var(--status-success); font-size: 0.88rem; margin-bottom: 20px;">
                     {{ session('success') }}
